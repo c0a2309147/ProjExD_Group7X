@@ -85,7 +85,7 @@ def main():
         if kk_rct.left < 60: kk_rct.left = 60  # 左端で制限
         if kk_rct.right > 460: kk_rct.right = 460  # 右端で制限
         if kk_rct.top < 340: kk_rct.top = 340  # 上端で制限
-        if kk_rct.bottom > 604: kk_rct.bottom = 604  # 下端で制限
+        if kk_rct.bottom > 595: kk_rct.bottom = 595  # 下端で制限
         
         screen.blit(kk_img, kk_rct)  # キャラクターを描画
         pg.display.update()  # 画面を更新
