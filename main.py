@@ -88,8 +88,8 @@ def main():
         
         # キャラクターが画面内に収まるように制限
         if kk_rct.left < 75: kk_rct.left = 75  # 左端で制限
-        if kk_rct.right > 575: kk_rct.right = 425  # 右端で制限
-        if kk_rct.top < 425: kk_rct.top = 575  # 上端で制限
+        if kk_rct.right > 575: kk_rct.right = 575  # 右端で制限
+        if kk_rct.top < 425: kk_rct.top = 425  # 上端で制限
         if kk_rct.bottom > 755: kk_rct.bottom = 755  # 下端で制限
         
         screen.blit(kk_img, kk_rct)  # キャラクターを描画
