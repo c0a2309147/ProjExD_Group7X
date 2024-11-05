@@ -191,7 +191,7 @@ def handle_enemy_obstacles():
         if obstacle["rect"].top < 340:
             obstacle["rect"].top = 340  # 上限
         if obstacle["rect"].bottom > 595:
-            obstacle["rect"].bottom = 595  # 下限
+            obstacle["rect"].bottom = 595  # 下限dfghjk
 
         # 障害物を描画
         pg.draw.rect(screen, (0, 255, 0), obstacle["rect"])
