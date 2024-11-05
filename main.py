@@ -19,6 +19,7 @@ kk_rct.center = int(320 * 0.8), int(590 * 0.8)  # キャラクターの初期位
 screen = pg.display.set_mode((WIDTH, HEIGHT))  # 指定した寸法で画面を作成
 
 menu_index = 0
+item_index = 0
 enter_menu = 9999
 tmr = 0  # タイマーの初期化
 tmp_tmr_F = 0
@@ -38,9 +39,11 @@ WHITE = (255, 255, 255)  # 白
 BLACK = (0, 0, 0)        # 黒
 GRAY = (200, 200, 200)   # グレー
 
+items=["Potion, 回復","Ether, MP回復","Elixir, 全回復"]
+
 def draw_menu(font, event, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
-    menu_texts = ["FIGHT", "ACT", "ITEM"]
+    menu_texts = ["ATTACK", "ACT", "ITEM"]
 
     if EnemyAttac == False and debug_EnemyAttac == False:
         if enter_menu > 2:
@@ -68,14 +71,39 @@ def draw_menu(font, event, tmr):
                 tmp_tmr = 0
                 tmp_tmr_F = False
         elif enter_menu == 2:
-            pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
-            if tmp_tmr_F == False:
-                tmp_tmr = tmr 
-                tmp_tmr_F = True
-            if tmr > (tmp_tmr + 100):
-                enter_menu = 9999
-                tmp_tmr = 0
-                tmp_tmr_F = False
+            #pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
+            #if tmp_tmr_F == False:
+                #tmp_tmr = tmr 
+                #tmp_tmr_F = True
+            #if tmr > (tmp_tmr + 100):
+                #enter_menu = 9999
+                #tmp_tmr = 0
+                #tmp_tmr_F = False
+            draw_item_menu(font)
+
+def draw_item_menu(font):
+    """アイテムメニューを表示"""
+    global item_index, screen
+
+    for i, item in enumerate(items):
+        color = (255, 255, 0) if i == item_index else WHITE
+        item_surface = font.render(item, True, color)
+        screen.blit(item_surface, (160, HEIGHT - 350 + i * 40))
+
+def handle_item_selection():
+    """アイテム選択の処理"""
+    global MeHP, item_index, enter_menu
+
+    selected_item = items[item_index]
+    
+    if selected_item == "Potion: 回復":
+        MeHP = min(MeHP + 30, 100)  # HP回復
+    elif selected_item == "Ether: MP回復":
+        print("MPが回復しました！（ダミー処理）")
+    elif selected_item == "Elixir: 全回復":
+        MeHP = 100  # HP全回復
+
+    enter_menu = 9999  # メニュー選択終了
 
 def draw_status(font):
     global MeLevel, MeHP, EnemyHP, EnemyAttac, screen
@@ -112,10 +140,7 @@ def move_hart():
         if key_lst[pg.K_RIGHT]:
             sum_mv[0] += 6
         if debug_EnemyAttac:
-            if key_lst[pg.K_UP]:
-                sum_mv[1] += 3.3
-            else:
-                sum_mv[1] += 3
+            sum_mv[1] += 4
         kk_rct.move_ip(sum_mv)
 
         if kk_rct.left < 140: kk_rct.left = 140
@@ -164,45 +189,26 @@ def handle_enemy_bullets():
 
 def handle_enemy_obstacles():
     global MeHP, GameOver
-
     if debug_EnemyAttac and tmr % 60 == 0:  # 障害物の生成頻度を高める
-        # 障害物の生成位置（上部と下部の両方）
-        y = random.choice([random.randint(340, 595), random.randint(340, 595)])  # y座標を340～595の範囲に制限
+        y = random.randint(300, HEIGHT - 100)
         width = random.randint(10, 30)
-        height = random.randint(60, 90)
+        height = 60
         speed = random.randint(3, 6)
+        enemy_obstacles.append({"rect": pg.Rect(0, 560, width, height), "speed": speed})
 
-        # 上部の場合、y座標を負の値にすることで、画面上に配置
-        if y < 470:  # 画面上部に配置される場合
-            enemy_obstacles.append({"rect": pg.Rect(WIDTH, y - height, width, height), "speed": -speed})
-        else:  # 画面下部に配置される場合
-            enemy_obstacles.append({"rect": pg.Rect(0, y, width, height), "speed": speed})
-
-    # 障害物の更新
     for obstacle in enemy_obstacles[:]:
         obstacle["rect"].x += obstacle["speed"]
-
-        # 画面外に出た障害物を削除
-        if obstacle["rect"].right < 0 or obstacle["rect"].left > WIDTH:
+        if obstacle["rect"].right > WIDTH:
             enemy_obstacles.remove(obstacle)
             continue
 
-        # 障害物が画面内に収まるように制限
-        if obstacle["rect"].top < 340:
-            obstacle["rect"].top = 340  # 上限
-        if obstacle["rect"].bottom > 595:
-            obstacle["rect"].bottom = 595  # 下限
-
-        # 障害物を描画
         pg.draw.rect(screen, (0, 255, 0), obstacle["rect"])
 
-        # 障害物とプレイヤーの衝突判定
         if kk_rct.colliderect(obstacle["rect"]):
             MeHP -= 15
             enemy_obstacles.remove(obstacle)
             if MeHP <= 0:
                 GameOver = True
-
 
 def main():
     global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac, debug_EnemyAttac
