@@ -17,17 +17,21 @@ en_img = pg.transform.rotozoom(pg.image.load("fig/koukaton.png"), 0, 0.72)
 kk_rct = kk_img.get_rect()  # キャラクターの矩形を取得
 kk_rct.center = int(320 * 0.8), int(590 * 0.8)  # キャラクターの初期位置を設定
 screen = pg.display.set_mode((WIDTH, HEIGHT))  # 指定した寸法で画面を作成
+
 menu_index = 0
 enter_menu = 9999
 tmr = 0  # タイマーの初期化
 tmp_tmr_F = 0
 enemy_bullets = [] # 攻撃弾の設定
+enemy_obstacles = [] # 新しい攻撃の障害物
 draw_message_No = 0
 
 # グローバル宣言(フラグ)
 EnemyAttac = False
+debug_EnemyAttac = False
 GameOver = False
 tmp_tmr_F = False
+DebugMode = False
 
 # 色の定義
 WHITE = (255, 255, 255)  # 白
@@ -38,7 +42,7 @@ def draw_menu(font, event, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
     menu_texts = ["FIGHT", "ACT", "ITEM"]
 
-    if EnemyAttac == False:
+    if EnemyAttac == False and debug_EnemyAttac == False:
         if enter_menu > 2:
             for i, text in enumerate(menu_texts):
                 color = (255, 255, 0) if i == menu_index else WHITE
@@ -76,7 +80,6 @@ def draw_menu(font, event, tmr):
 def draw_status(font):
     global MeLevel, MeHP, EnemyHP, EnemyAttac, screen
     
-    # ステータスボックスの中央配置
     if enter_menu > 2:
         pg.draw.rect(screen, WHITE, (128, 328, 424, 280), 0)
         pg.draw.rect(screen, BLACK, (128 + 12, 340, 400, 256), 0)
@@ -92,13 +95,12 @@ def draw_status(font):
     hp_width = (MeHP / 100) * 200
     pg.draw.rect(screen, (255, 255, 0), (168 + 182, 623, hp_width, 20))
 
-
 def draw_enemy():
     en_ip = [(WIDTH / 2) - 50, 80 + 5 * math.sin(tmr * 0.05)]
     screen.blit(en_img, en_ip)
 
 def move_hart():
-    if EnemyAttac == True:
+    if EnemyAttac == True or debug_EnemyAttac == True:
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
         if key_lst[pg.K_UP]:
@@ -109,6 +111,8 @@ def move_hart():
             sum_mv[0] -= 6
         if key_lst[pg.K_RIGHT]:
             sum_mv[0] += 6
+        if debug_EnemyAttac:
+            sum_mv[1] += 4
         kk_rct.move_ip(sum_mv)
 
         if kk_rct.left < 140: kk_rct.left = 140
@@ -123,18 +127,20 @@ def draw_message(font):
     global draw_message_No
     serect = ["こうかとんがあらわれた！!", "こうかとんはあなたをにらみつけている"], ["Test"]
 
-    if EnemyAttac == False and enter_menu > 2:
+    if EnemyAttac == False and enter_menu > 2 and debug_EnemyAttac == False:
         for i, text in enumerate(serect[draw_message_No]):
-                menu_surface = font.render(text, True, WHITE)
-                screen.blit(menu_surface, (145, 350 + i * 40))
+            menu_surface = font.render(text, True, WHITE)
+            screen.blit(menu_surface, (145, 350 + i * 40))
 
 def handle_enemy_bullets():
     global MeHP, GameOver
-    if tmr % 20 == 0:
-        x = random.randint(60, 460)
+    #if tmr % 20 == 0:
+    if EnemyAttac and tmr % 5 == 0:
+        x = random.randint(60, 560)
         y = 80
         speed = random.randint(2, 6)
         enemy_bullets.append({"rect": pg.Rect(x, y, 10, 10), "speed": speed})
+    
 
     for bullet in enemy_bullets[:]:
         bullet["rect"].y += bullet["speed"]
@@ -150,8 +156,34 @@ def handle_enemy_bullets():
             if MeHP <= 0:
                 GameOver = True
 
+    if not EnemyAttac:
+        enemy_bullets.clear()
+
+def handle_enemy_obstacles():
+    global MeHP, GameOver
+    if debug_EnemyAttac and tmr % 60 == 0:  # 障害物の生成頻度を高める
+        y = random.randint(300, HEIGHT - 100)
+        width = random.randint(10, 30)
+        height = 60
+        speed = random.randint(3, 6)
+        enemy_obstacles.append({"rect": pg.Rect(0, 560, width, height), "speed": speed})
+
+    for obstacle in enemy_obstacles[:]:
+        obstacle["rect"].x += obstacle["speed"]
+        if obstacle["rect"].right > WIDTH:
+            enemy_obstacles.remove(obstacle)
+            continue
+
+        pg.draw.rect(screen, (0, 255, 0), obstacle["rect"])
+
+        if kk_rct.colliderect(obstacle["rect"]):
+            MeHP -= 15
+            enemy_obstacles.remove(obstacle)
+            if MeHP <= 0:
+                GameOver = True
+
 def main():
-    global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac
+    global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac, debug_EnemyAttac
 
     pg.display.set_caption("逃げろ！こうかとん")
     font_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
@@ -164,8 +196,17 @@ def main():
                 return
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_RSHIFT:
+                    # `EnemyAttac` トグルするが、`debug_EnemyAttac` が有効なら無効化
                     EnemyAttac = not EnemyAttac
-                if not EnemyAttac:
+                    if debug_EnemyAttac:
+                        EnemyAttac = False
+                if event.key == pg.K_LSHIFT:
+                    # `debug_EnemyAttac` トグルするが、`EnemyAttac` が有効なら無効化
+                    debug_EnemyAttac = not debug_EnemyAttac
+                    if EnemyAttac:
+                        EnemyAttac = False
+                if not EnemyAttac and not debug_EnemyAttac:
+                    # メニュー操作の処理
                     if event.key == pg.K_RIGHT:
                         menu_index = (menu_index + 1) % 3
                     elif event.key == pg.K_LEFT:
@@ -180,8 +221,12 @@ def main():
         draw_enemy()
         draw_message(font)
 
+        # `EnemyAttac` が有効なときは通常の弾攻撃を実行
         if EnemyAttac:
             handle_enemy_bullets()
+        # `debug_EnemyAttac` が有効なときは障害物攻撃を実行
+        elif debug_EnemyAttac:
+            handle_enemy_obstacles()
 
         if GameOver:
             print("Game Over")
@@ -190,6 +235,7 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(60)
+
 
 if __name__ == "__main__":
     pg.init()
