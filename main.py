@@ -20,6 +20,7 @@ kk_rct.center = int(320 * 0.8), int(590 * 0.8)  # キャラクターの初期位
 screen = pg.display.set_mode((WIDTH, HEIGHT))  # 指定した寸法で画面を作成
 
 menu_index = 0
+item_index = 0
 enter_menu = 9999
 tmr = 0  # タイマーの初期化
 tmp_tmr_F = 0
@@ -91,9 +92,11 @@ def draw_attack_bar(font, tmr):
             else:
                 print("失敗！攻撃が外れた")
 
+items=["Potion, 回復","Ether, MP回復","Elixir, 全回復"]
+
 def draw_menu(font, event, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
-    menu_texts = ["FIGHT", "ACT", "ITEM"]
+    menu_texts = ["ATTACK", "ACT", "ITEM"]
 
     if EnemyAttac == False and debug_EnemyAttac == False:
         if enter_menu > 2:
@@ -115,14 +118,39 @@ def draw_menu(font, event, tmr):
                 tmp_tmr = 0
                 tmp_tmr_F = False
         elif enter_menu == 2:
-            pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
-            if tmp_tmr_F == False:
-                tmp_tmr = tmr 
-                tmp_tmr_F = True
-            if tmr > (tmp_tmr + 100):
-                enter_menu = 9999
-                tmp_tmr = 0
-                tmp_tmr_F = False
+            #pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
+            #if tmp_tmr_F == False:
+                #tmp_tmr = tmr 
+                #tmp_tmr_F = True
+            #if tmr > (tmp_tmr + 100):
+                #enter_menu = 9999
+                #tmp_tmr = 0
+                #tmp_tmr_F = False
+            draw_item_menu(font)
+
+def draw_item_menu(font):
+    """アイテムメニューを表示"""
+    global item_index, screen
+
+    for i, item in enumerate(items):
+        color = (255, 255, 0) if i == item_index else WHITE
+        item_surface = font.render(item, True, color)
+        screen.blit(item_surface, (160, HEIGHT - 350 + i * 40))
+
+def handle_item_selection():
+    """アイテム選択の処理"""
+    global MeHP, item_index, enter_menu
+
+    selected_item = items[item_index]
+    
+    if selected_item == "Potion: 回復":
+        MeHP = min(MeHP + 30, 100)  # HP回復
+    elif selected_item == "Ether: MP回復":
+        print("MPが回復しました！（ダミー処理）")
+    elif selected_item == "Elixir: 全回復":
+        MeHP = 100  # HP全回復
+
+    enter_menu = 9999  # メニュー選択終了
 
 def draw_status(font):
     global MeLevel, MeHP, EnemyHP, EnemyAttac, screen
