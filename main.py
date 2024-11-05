@@ -3,6 +3,7 @@ import sys
 import pygame as pg
 import math
 import random
+import time
 
 # 実行ファイルのディレクトリに移動
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +38,14 @@ DebugMode = False
 WHITE = (255, 255, 255)  # 白
 BLACK = (0, 0, 0)        # 黒
 GRAY = (200, 200, 200)   # グレー
+RED = (255, 0, 0)        #赤
+
+def draw_gameover_screen(font):
+    """ゲームオーバー画面を描画する"""
+    gameover_text = font.render("GAME OVER", True, RED)
+    screen.fill(BLACK)
+    screen.blit(gameover_text, (WIDTH // 2 - gameover_text.get_width() // 2, HEIGHT // 2 - 50))
+    pg.display.update()
 
 def draw_menu(font, event, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
@@ -112,10 +121,7 @@ def move_hart():
         if key_lst[pg.K_RIGHT]:
             sum_mv[0] += 6
         if debug_EnemyAttac:
-            if key_lst[pg.K_UP]:
-                sum_mv[1] += 3.3
-            else:
-                sum_mv[1] += 3
+            sum_mv[1] += 4
         kk_rct.move_ip(sum_mv)
 
         if kk_rct.left < 140: kk_rct.left = 140
@@ -158,51 +164,34 @@ def handle_enemy_bullets():
             enemy_bullets.remove(bullet)
             if MeHP <= 0:
                 GameOver = True
+                
+
 
     if not EnemyAttac:
         enemy_bullets.clear()
 
 def handle_enemy_obstacles():
     global MeHP, GameOver
-
     if debug_EnemyAttac and tmr % 60 == 0:  # 障害物の生成頻度を高める
-        # 障害物の生成位置（上部と下部の両方）
-        y = random.choice([random.randint(340, 595), random.randint(340, 595)])  # y座標を340～595の範囲に制限
+        y = random.randint(300, HEIGHT - 100)
         width = random.randint(10, 30)
-        height = random.randint(60, 90)
+        height = 60
         speed = random.randint(3, 6)
+        enemy_obstacles.append({"rect": pg.Rect(0, 560, width, height), "speed": speed})
 
-        # 上部の場合、y座標を負の値にすることで、画面上に配置
-        if y < 470:  # 画面上部に配置される場合
-            enemy_obstacles.append({"rect": pg.Rect(WIDTH, y - height, width, height), "speed": -speed})
-        else:  # 画面下部に配置される場合
-            enemy_obstacles.append({"rect": pg.Rect(0, y, width, height), "speed": speed})
-
-    # 障害物の更新
     for obstacle in enemy_obstacles[:]:
         obstacle["rect"].x += obstacle["speed"]
-
-        # 画面外に出た障害物を削除
-        if obstacle["rect"].right < 0 or obstacle["rect"].left > WIDTH:
+        if obstacle["rect"].right > WIDTH:
             enemy_obstacles.remove(obstacle)
             continue
 
-        # 障害物が画面内に収まるように制限
-        if obstacle["rect"].top < 340:
-            obstacle["rect"].top = 340  # 上限
-        if obstacle["rect"].bottom > 595:
-            obstacle["rect"].bottom = 595  # 下限dfghjk
-
-        # 障害物を描画
         pg.draw.rect(screen, (0, 255, 0), obstacle["rect"])
 
-        # 障害物とプレイヤーの衝突判定
         if kk_rct.colliderect(obstacle["rect"]):
             MeHP -= 15
             enemy_obstacles.remove(obstacle)
             if MeHP <= 0:
                 GameOver = True
-
 
 def main():
     global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac, debug_EnemyAttac
@@ -252,7 +241,9 @@ def main():
             handle_enemy_obstacles()
 
         if GameOver:
-            print("Game Over")
+            #print("Game Over")
+            draw_gameover_screen(font)
+            time.sleep(5)
             return
 
         pg.display.update()
