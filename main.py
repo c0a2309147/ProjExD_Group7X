@@ -128,7 +128,7 @@ def move_hart():
 
 def draw_message(font):
     global draw_message_No
-    serect = ["こうかとんがあらわれた！!", "こうかとんはあなたをにらみつけている"], ["Test"]
+    serect = ["こうかとんがあらわれた！!", "こうかとんはあなたをにらみつけている"]
 
     if EnemyAttac == False and enter_menu > 2 and debug_EnemyAttac == False:
         for i, text in enumerate(serect[draw_message_No]):
