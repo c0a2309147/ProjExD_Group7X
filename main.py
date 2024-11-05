@@ -47,6 +47,50 @@ def draw_gameover_screen(font):
     screen.blit(gameover_text, (WIDTH // 2 - gameover_text.get_width() // 2, HEIGHT // 2 - 50))
     pg.display.update()
 
+def draw_attack_bar(font, tmr):
+    global enter_menu, tmp_tmr_F, tmp_tmr
+
+    # 攻撃バーの設定
+    bar_width = 400
+    bar_height = 20
+    bar_x = 140
+    bar_y = HEIGHT - 150
+
+    # タイミングバーの設定
+    timing_width = 20
+    timing_x = bar_x + (tmr % (bar_width - timing_width))
+    timing_color = (0, 255, 0) if 160 < timing_x < 320 else (255, 0, 0)
+
+    # 判定ゾーンの設定（成功範囲）
+    judge_zone_start = bar_x + 160
+    judge_zone_end = bar_x + 320
+    judge_zone_color = (255, 255, 0)
+
+    # バー全体の枠
+    pg.draw.rect(screen, WHITE, (bar_x, bar_y, bar_width, bar_height), 2)
+
+    # 判定ゾーンを描画
+    pg.draw.rect(screen, judge_zone_color, (judge_zone_start, bar_y, judge_zone_end - judge_zone_start, bar_height))
+
+    # タイミングバーを描画
+    pg.draw.rect(screen, timing_color, (timing_x, bar_y, timing_width, bar_height))
+
+    # プレイヤーの入力待ちと判定処理
+    if enter_menu == 0:
+        if tmp_tmr_F == False:
+            tmp_tmr = tmr 
+            tmp_tmr_F = True
+
+        if tmr > (tmp_tmr + 100):
+            enter_menu = 9999
+            tmp_tmr = 0
+            tmp_tmr_F = False
+        elif pg.key.get_pressed()[pg.K_RETURN]:
+            if judge_zone_start <= timing_x <= judge_zone_end:
+                print("成功！攻撃が当たった")
+            else:
+                print("失敗！攻撃が外れた")
+
 def draw_menu(font, event, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
     menu_texts = ["FIGHT", "ACT", "ITEM"]
@@ -59,14 +103,8 @@ def draw_menu(font, event, tmr):
                 screen.blit(menu_surface, (160 + i * 160, HEIGHT - 125))
 
         if enter_menu == 0:
-            pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
-            if tmp_tmr_F == False:
-                tmp_tmr = tmr 
-                tmp_tmr_F = True
-            if tmr > (tmp_tmr + 100):
-                enter_menu = 9999
-                tmp_tmr = 0
-                tmp_tmr_F = False
+            if enter_menu == 0:
+                draw_attack_bar(font, tmr)
         elif enter_menu == 1:
             pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
             if tmp_tmr_F == False:
@@ -96,8 +134,8 @@ def draw_status(font):
     lv_text = font.render(f"LV {MeLevel}", True, WHITE)
     hp_text = font.render(f"HP {MeHP}/100", True, WHITE)
 
-    screen.blit(lv_text, (168 - 28, 626))
-    screen.blit(hp_text, (178 + 40, 626))
+    screen.blit(lv_text, (168 - 28, 616))
+    screen.blit(hp_text, (178 + 40, 616))
     
     # HPゲージを描画
     pg.draw.rect(screen, (255, 0, 0), (168 + 182, 623, 200, 20))
