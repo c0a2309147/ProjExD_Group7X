@@ -18,6 +18,9 @@ en_img = pg.transform.rotozoom(pg.image.load("fig/koukaton.png"), 0, 0.72)
 kk_rct = kk_img.get_rect()  # キャラクターの矩形を取得
 kk_rct.center = int(320 * 0.8), int(590 * 0.8)  # キャラクターの初期位置を設定
 screen = pg.display.set_mode((WIDTH, HEIGHT))  # 指定した寸法で画面を作成
+# アイテムのリスト
+items = ["Potion: 回復", "Ether: MP回復", "Elixir: 全回復"]
+
 
 menu_index = 0
 item_index = 0
@@ -48,7 +51,7 @@ def draw_gameover_screen(font):
     screen.blit(gameover_text, (WIDTH // 2 - gameover_text.get_width() // 2, HEIGHT // 2 - 50))
     pg.display.update()
 
-def draw_attack_bar(font, tmr):
+def draw_attack_bar(font, tmr, event):
     global enter_menu, tmp_tmr_F, tmp_tmr
 
     # 攻撃バーの設定
@@ -76,23 +79,30 @@ def draw_attack_bar(font, tmr):
     # タイミングバーを描画
     pg.draw.rect(screen, timing_color, (timing_x, bar_y, timing_width, bar_height))
 
-    # プレイヤーの入力待ちと判定処理
+    # 攻撃判定の処理
     if enter_menu == 0:
         if tmp_tmr_F == False:
             tmp_tmr = tmr 
             tmp_tmr_F = True
 
         if tmr > (tmp_tmr + 100):
-            enter_menu = 9999
-            tmp_tmr = 0
-            tmp_tmr_F = False
-        elif pg.key.get_pressed()[pg.K_RETURN]:
+            reset_attack()  # 攻撃終了時にリセット関数を呼び出し
+        elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
             if judge_zone_start <= timing_x <= judge_zone_end:
                 print("成功！攻撃が当たった")
             else:
                 print("失敗！攻撃が外れた")
+            reset_attack()  # 攻撃が終了するのでリセット
 
-items=["Potion, 回復","Ether, MP回復","Elixir, 全回復"]
+def reset_attack():
+    """攻撃をリセットする関数"""
+    global enter_menu, tmp_tmr_F, tmp_tmr, enemy_bullets, enemy_obstacles
+    enter_menu = 9999
+    tmp_tmr = 0
+    tmp_tmr_F = False
+    enemy_bullets.clear()
+    enemy_obstacles.clear()
+
 
 def draw_menu(font, event, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
@@ -277,13 +287,10 @@ def handle_enemy_obstacles():
             if MeHP <= 0:
                 GameOver = True
 
-
 def main():
     global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac, debug_EnemyAttac
 
     pg.display.set_caption("逃げろ！こうかとん")
-    # font_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
-    # font = pg.font.Font(font_path, int(40 * 0.5))
     font = pg.font.Font(None, int(60 * 0.5))
     clock = pg.time.Clock()
     
@@ -293,23 +300,24 @@ def main():
                 return
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_RSHIFT:
-                    # `EnemyAttac` トグルするが、`debug_EnemyAttac` が有効なら無効化
                     EnemyAttac = not EnemyAttac
                     if debug_EnemyAttac:
                         EnemyAttac = False
+                    reset_attack()
                 if event.key == pg.K_LSHIFT:
-                    # `debug_EnemyAttac` トグルするが、`EnemyAttac` が有効なら無効化
                     debug_EnemyAttac = not debug_EnemyAttac
                     if EnemyAttac:
                         EnemyAttac = False
+                    reset_attack()
                 if not EnemyAttac and not debug_EnemyAttac:
-                    # メニュー操作の処理
                     if event.key == pg.K_RIGHT:
                         menu_index = (menu_index + 1) % 3
                     elif event.key == pg.K_LEFT:
                         menu_index = (menu_index - 1) % 3
                     elif event.key == pg.K_RETURN:
                         enter_menu = menu_index
+                        if enter_menu == 0:
+                            reset_attack()
 
         screen.fill(BLACK)
         draw_status(font)
@@ -318,15 +326,12 @@ def main():
         draw_enemy()
         draw_message(font)
 
-        # `EnemyAttac` が有効なときは通常の弾攻撃を実行
         if EnemyAttac:
             handle_enemy_bullets()
-        # `debug_EnemyAttac` が有効なときは障害物攻撃を実行
         elif debug_EnemyAttac:
             handle_enemy_obstacles()
 
         if GameOver:
-            #print("Game Over")
             draw_gameover_screen(font)
             time.sleep(5)
             return
