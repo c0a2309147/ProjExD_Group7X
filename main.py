@@ -51,7 +51,7 @@ def draw_gameover_screen(font):
     screen.blit(gameover_text, (WIDTH // 2 - gameover_text.get_width() // 2, HEIGHT // 2 - 50))
     pg.display.update()
 
-def draw_attack_bar(font, tmr, event):
+def draw_attack_bar(font, tmr):
     global enter_menu, tmp_tmr_F, tmp_tmr
 
     # 攻撃バーの設定
@@ -87,7 +87,7 @@ def draw_attack_bar(font, tmr, event):
 
         if tmr > (tmp_tmr + 100):
             reset_attack()  # 攻撃終了時にリセット関数を呼び出し
-        elif event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+        elif pg.key.get_pressed()[pg.K_RETURN]:  # エンターキーが押されたかをチェック
             if judge_zone_start <= timing_x <= judge_zone_end:
                 print("成功！攻撃が当たった")
             else:
@@ -104,7 +104,7 @@ def reset_attack():
     enemy_obstacles.clear()
 
 
-def draw_menu(font, event, tmr):
+def draw_menu(font, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
     menu_texts = ["ATTACK", "ACT", "ITEM"]
 
@@ -116,8 +116,7 @@ def draw_menu(font, event, tmr):
                 screen.blit(menu_surface, (160 + i * 160, HEIGHT - 125))
 
         if enter_menu == 0:
-            if enter_menu == 0:
-                draw_attack_bar(font, tmr)
+            draw_attack_bar(font, tmr)  # draw_attack_barからeventを削除
         elif enter_menu == 1:
             pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
             if tmp_tmr_F == False:
@@ -128,14 +127,6 @@ def draw_menu(font, event, tmr):
                 tmp_tmr = 0
                 tmp_tmr_F = False
         elif enter_menu == 2:
-            #pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
-            #if tmp_tmr_F == False:
-                #tmp_tmr = tmr 
-                #tmp_tmr_F = True
-            #if tmr > (tmp_tmr + 100):
-                #enter_menu = 9999
-                #tmp_tmr = 0
-                #tmp_tmr_F = False
             draw_item_menu(font)
 
 def draw_item_menu(font):
@@ -318,10 +309,11 @@ def main():
                         enter_menu = menu_index
                         if enter_menu == 0:
                             reset_attack()
-
+        
+        # 他の描画・処理
         screen.fill(BLACK)
         draw_status(font)
-        draw_menu(font, event, tmr)
+        draw_menu(font, tmr)  # draw_menuからeventを削除
         move_hart()
         draw_enemy()
         draw_message(font)
