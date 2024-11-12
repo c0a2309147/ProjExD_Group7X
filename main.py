@@ -111,6 +111,7 @@ def draw_attack_bar(font, tmr):
 
 
 
+
                 
 def reset_attack():
     global enter_menu, tmp_tmr_F, tmp_tmr, enemy_bullets, enemy_obstacles, timing_width, timing_x, timing_color, tmr, auto_attack, attack_timer, EnemyAttac, current_attack_pattern
@@ -245,44 +246,18 @@ def draw_message(font):
         message_surface = font.render(serect[draw_message_No], True, WHITE)
         screen.blit(message_surface, (145, 350))
 
-def handle_enemy_bullets():
-    global MeHP, GameOver
-    #if tmr % 20 == 0:
-    if EnemyAttac and tmr % 5 == 0:
-        x = random.randint(60, 560)
-        y = 80
-        speed = random.randint(2, 6)
-        enemy_bullets.append({"rect": pg.Rect(x, y, 10, 10), "speed": speed})
-    
-
-    for bullet in enemy_bullets[:]:
-        bullet["rect"].y += bullet["speed"]
-        if bullet["rect"].top > HEIGHT:
-            enemy_bullets.remove(bullet)
-            continue
-
-        pg.draw.rect(screen, (255, 0, 0), bullet["rect"])
-
-        if kk_rct.colliderect(bullet["rect"]):
-            MeHP -= 10
-            enemy_bullets.remove(bullet)
-            if MeHP <= 0:
-                GameOver = True
-                
-
-
-    if not EnemyAttac:
-        enemy_bullets.clear()
-
 def handle_enemy_obstacles():
     global MeHP, GameOver
 
-    if debug_EnemyAttac and tmr % 60 == 0:  # 障害物の生成頻度を高める
+    print("testetetete")
+
+    if EnemyAttac and tmr % 55 == 0:  # 障害物の生成頻度を高める
         # 障害物の生成位置（上部と下部の両方）
         y = random.choice([random.randint(340, 595), random.randint(340, 595)])  # y座標を340～595の範囲に制限
         width = random.randint(10, 30)
         height = random.randint(60, 90)
         speed = random.randint(3, 6)
+        print(width, height)
 
         # 上部の場合、y座標を負の値にすることで、画面上に配置
         if y < 470:  # 画面上部に配置される場合
@@ -313,7 +288,13 @@ def handle_enemy_obstacles():
             MeHP -= 15
             enemy_obstacles.remove(obstacle)
             if MeHP <= 0:
-                GameOver = True 
+                GameOver = True
+                
+
+
+    if not EnemyAttac:
+        enemy_bullets.clear()
+
 
 
 def handle_enemy_attack():
@@ -329,14 +310,14 @@ def handle_enemy_attack():
     elif auto_attack and not EnemyAttac:  # 自動攻撃が設定されている場合のみ開始
         EnemyAttac = True
         # ランダムにパターンを選択
-        current_attack_pattern = random.choice(["pattern1", "pattern2"])
-        print(f"敵の攻撃パターン: {current_attack_pattern} を開始")
+        # current_attack_pattern = random.choice(["pattern1", "pattern2"])
+        # print(f"敵の攻撃パターン: {current_attack_pattern} を開始")
 
     # 選択された攻撃パターンに応じて攻撃を実行
     if EnemyAttac:
         if current_attack_pattern == "pattern1":
             print("攻撃パターン1: 弾を生成")
-            handle_enemy_bullets()  # 攻撃パターン1: 弾を生成
+            handle_enemy_obstacles()  # 攻撃パターン1: 弾を生成
         elif current_attack_pattern == "pattern2":
             print("攻撃パターン2: 障害物を生成")
             handle_enemy_obstacles()  # 攻撃パターン2: 障害物を生成
@@ -356,16 +337,16 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN:
-                # if event.key == pg.K_RSHIFT:
-                #     EnemyAttac = not EnemyAttac
-                #     if debug_EnemyAttac:
-                #         EnemyAttac = False
-                #     reset_attack()
-                # if event.key == pg.K_LSHIFT:
-                #     debug_EnemyAttac = not debug_EnemyAttac
-                #     if EnemyAttac:
-                #         EnemyAttac = False
-                #     reset_attack()
+                if event.key == pg.K_RSHIFT:
+                    EnemyAttac = not EnemyAttac
+                    if debug_EnemyAttac:
+                        EnemyAttac = False
+                    reset_attack()
+                if event.key == pg.K_LSHIFT:
+                    debug_EnemyAttac = not debug_EnemyAttac
+                    if EnemyAttac:
+                        EnemyAttac = False
+                    reset_attack()
                 if not EnemyAttac and not debug_EnemyAttac:
                     if event.key == pg.K_RIGHT:
                         menu_index = (menu_index + 1) % 3
