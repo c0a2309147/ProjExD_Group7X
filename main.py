@@ -57,20 +57,16 @@ RED = (255, 0, 0)        #赤
 def draw_enemy_effect():
     global effect_active, effect_timer, tmp
     if effect_active:
-        # エフェクト（例えば、赤い光）を敵キャラの上に表示
-        # effect_rect = pg.Rect(WIDTH / 2 - 50, 80 + 5 * math.sin(tmr * 0.05), 100, 100)
-        # pg.draw.circle(screen, (255, 0, 0), effect_rect.center, 50)  # 赤い円を描画
-        # pg.draw.circle(screen, (255, 255, 0), effect_rect.center, 30)  # 黄色い円で重ねて描画
+
         font = pg.font.SysFont("Arial", 48)
         miss_text = font.render("Miss", True, (255, 0, 255))  
         screen.blit(miss_text, (WIDTH / 2 - miss_text.get_width()  / 2, HEIGHT / 2 - 300)) 
 
-        # エフェクトの持続時間が過ぎたらエフェクトを終了
         if effect_timer > effect_duration + 10:
             effect_active = False
-            effect_timer = 0  # タイマーリセット
+            effect_timer = 0  
         else:
-            effect_timer += 1  # タイマーを進める
+            effect_timer += 1  
 
 def draw_gameover_screen(font):
     """ゲームオーバー画面を描画する"""
@@ -82,7 +78,6 @@ def draw_gameover_screen(font):
 def draw_attack_bar(font, tmr):
     global enter_menu, tmp_tmr_F, tmp_tmr, timing_width, timing_x, timing_color, tmp
 
-    # 攻撃バーの設定
     bar_width = 400
     bar_height = 20
     bar_x = 140
@@ -125,16 +120,13 @@ def draw_attack_bar(font, tmr):
         reset_attack()  # リセット関数を呼び出して初期化
     elif pg.key.get_pressed()[pg.K_SPACE]:
         if judge_zone_start <= timing_x <= judge_zone_end:
-            print("成功！攻撃が当たった")
             reset_attack()
             tmp = True
         else:
-            print("失敗！攻撃が外れた")
             reset_attack()
             tmp = False
-            effect_timer += 1  # タイマーを進める
+            effect_timer += 1  
 
-    # SPACE!!のテキストを表示
     space_text = font.render("SPACE!!", True, WHITE)
     screen.blit(space_text, (bar_x + bar_width / 2 - space_text.get_width() / 2, bar_y + 60))  # 攻撃バーの下に表示
 
@@ -210,7 +202,6 @@ def draw_menu(font, event, tmr):
         if enter_menu == 0:
             draw_attack_bar(font, tmr)
         elif enter_menu == 1:
-            print("aaaaaa")
             pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
             if tmp_tmr_F == False:
                 tmp_tmr = tmr 
@@ -312,9 +303,7 @@ def draw_message(font):
 def handle_enemy_obstacles():
     global MeHP, GameOver
 
-    print("testetetete")
-
-    if EnemyAttac and tmr % 55 == 0:  # 障害物の生成頻度を高める
+    if EnemyAttac and tmr % 30 == 0:  # 障害物の生成頻度を高める
         # 障害物の生成位置（上部と下部の両方）
         y = random.choice([random.randint(340, 595), random.randint(340, 595)]) 
         width = random.randint(10, 30)
@@ -420,10 +409,8 @@ def main():
                             pass
                     elif event.key == pg.K_SPACE and enter_menu == 0:
                         if timing_x >= 160 and timing_x <= 320:
-                            print("成功！攻撃が当たった")
                             reset_attack()
                         else:
-                            print("失敗！攻撃が外れた")
                             reset_attack()
 
         screen.fill(BLACK)
@@ -435,7 +422,6 @@ def main():
 
         # エフェクトを描画
         draw_enemy_effect()
-
         handle_enemy_attack()
 
         if GameOver:
