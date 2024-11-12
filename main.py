@@ -45,6 +45,7 @@ auto_attack = False  # 自動攻撃のフラグ
 attack_timer = time.time()  # 攻撃タイマー
 current_attack_pattern = None
 effect_active = False
+tmp = False
 
 # 色の定義
 WHITE = (255, 255, 255)  # 白
@@ -54,15 +55,18 @@ RED = (255, 0, 0)        #赤
 
 # エフェクトの表示処理
 def draw_enemy_effect():
-    global effect_active, effect_timer
+    global effect_active, effect_timer, tmp
     if effect_active:
         # エフェクト（例えば、赤い光）を敵キャラの上に表示
-        effect_rect = pg.Rect(WIDTH / 2 - 50, 80 + 5 * math.sin(tmr * 0.05), 100, 100)
-        pg.draw.circle(screen, (255, 0, 0), effect_rect.center, 50)  # 赤い円を描画
-        pg.draw.circle(screen, (255, 255, 0), effect_rect.center, 30)  # 黄色い円で重ねて描画
+        # effect_rect = pg.Rect(WIDTH / 2 - 50, 80 + 5 * math.sin(tmr * 0.05), 100, 100)
+        # pg.draw.circle(screen, (255, 0, 0), effect_rect.center, 50)  # 赤い円を描画
+        # pg.draw.circle(screen, (255, 255, 0), effect_rect.center, 30)  # 黄色い円で重ねて描画
+        font = pg.font.SysFont("Arial", 48)
+        miss_text = font.render("Miss", True, (255, 0, 255))  
+        screen.blit(miss_text, (WIDTH / 2 - miss_text.get_width()  / 2, HEIGHT / 2 - 300)) 
 
         # エフェクトの持続時間が過ぎたらエフェクトを終了
-        if effect_timer > effect_duration:
+        if effect_timer > effect_duration + 10:
             effect_active = False
             effect_timer = 0  # タイマーリセット
         else:
@@ -76,7 +80,7 @@ def draw_gameover_screen(font):
     pg.display.update()
 
 def draw_attack_bar(font, tmr):
-    global enter_menu, tmp_tmr_F, tmp_tmr, timing_width, timing_x, timing_color
+    global enter_menu, tmp_tmr_F, tmp_tmr, timing_width, timing_x, timing_color, tmp
 
     # 攻撃バーの設定
     bar_width = 400
@@ -94,7 +98,7 @@ def draw_attack_bar(font, tmr):
     # タイミングバーの進行
     if enter_menu == 0:
         timing_x += 4  # タイミングバーの移動速度
-        if timing_x >= bar_x + bar_width:
+        if timing_x >= bar_x + bar_width - 20:
             timing_x = bar_x  # タイミングバーを最初に戻す
 
     # 判定ゾーンの設定
@@ -103,13 +107,13 @@ def draw_attack_bar(font, tmr):
     judge_zone_color = (255, 255, 0)
 
     # 攻撃バー枠
-    pg.draw.rect(screen, WHITE, (bar_x, bar_y +30, bar_width, bar_height), 2)
+    pg.draw.rect(screen, WHITE, (bar_x, bar_y + 30, bar_width, bar_height), 2)
 
     # 判定ゾーンの描画
-    pg.draw.rect(screen, judge_zone_color, (judge_zone_start, bar_y+30, judge_zone_end - judge_zone_start, bar_height))
+    pg.draw.rect(screen, judge_zone_color, (judge_zone_start, bar_y + 30, judge_zone_end - judge_zone_start, bar_height))
 
     # タイミングバーの描画
-    pg.draw.rect(screen, timing_color, (timing_x, bar_y+30, timing_width, bar_height))
+    pg.draw.rect(screen, timing_color, (timing_x, bar_y + 30, timing_width, bar_height))
 
     # タイマーをリセット
     if enter_menu == 0 and tmp_tmr_F:
@@ -123,16 +127,21 @@ def draw_attack_bar(font, tmr):
         if judge_zone_start <= timing_x <= judge_zone_end:
             print("成功！攻撃が当たった")
             reset_attack()
+            tmp = True
         else:
             print("失敗！攻撃が外れた")
             reset_attack()
-
-
-                
+            tmp = False
             effect_timer += 1  # タイマーを進める
 
+    # SPACE!!のテキストを表示
+    space_text = font.render("SPACE!!", True, WHITE)
+    screen.blit(space_text, (bar_x + bar_width / 2 - space_text.get_width() / 2, bar_y + 60))  # 攻撃バーの下に表示
+
+
 def reset_attack():
-    global enter_menu, tmp_tmr_F, tmp_tmr, timing_x, timing_color, auto_attack, attack_timer, EnemyAttac, current_attack_pattern, effect_active, effect_timer
+    global enter_menu, tmp_tmr_F, tmp_tmr, timing_x, timing_color, auto_attack, attack_timer, EnemyAttac, current_attack_pattern, effect_active, effect_timer, enemy_bullets, enemy_obstacles
+    
     enter_menu = 9999  # メニューのリセット
     tmp_tmr = 0  # タイマーリセット
     tmp_tmr_F = False  # タイミングフラグリセット
@@ -142,11 +151,18 @@ def reset_attack():
     attack_timer = time.time()  # 攻撃タイマーのリセット
     current_attack_pattern = random.choice(["pattern1", "pattern2"])  # ランダムな攻撃パターンの選択
     print(f"敵の攻撃パターン: {current_attack_pattern} を開始")
+    
+    # 攻撃リストをクリア
+    enemy_bullets.clear()
+    enemy_obstacles.clear()
+
     EnemyAttac = True  # 敵の攻撃を開始
 
     # エフェクト開始
     effect_active = True
     effect_timer = 0  # エフェクトタイマーをリセット
+
+
 
 
 
@@ -300,13 +316,12 @@ def handle_enemy_obstacles():
 
     if EnemyAttac and tmr % 55 == 0:  # 障害物の生成頻度を高める
         # 障害物の生成位置（上部と下部の両方）
-        y = random.choice([random.randint(340, 595), random.randint(340, 595)])  # y座標を340～595の範囲に制限
+        y = random.choice([random.randint(340, 595), random.randint(340, 595)]) 
         width = random.randint(10, 30)
         height = random.randint(60, 90)
         speed = random.randint(3, 6)
         print(width, height)
 
-        # 上部の場合、y座標を負の値にすることで、画面上に配置
         if y < 470:  # 画面上部に配置される場合
             enemy_obstacles.append({"rect": pg.Rect(WIDTH, y - height, width, height), "speed": -speed})
         else:  # 画面下部に配置される場合
@@ -316,21 +331,19 @@ def handle_enemy_obstacles():
     for obstacle in enemy_obstacles[:]:
         obstacle["rect"].x += obstacle["speed"]
 
-        # 画面外に出た障害物を削除
+
         if obstacle["rect"].right < 0 or obstacle["rect"].left > WIDTH:
             enemy_obstacles.remove(obstacle)
             continue
 
-        # 障害物が画面内に収まるように制限
         if obstacle["rect"].top < 340:
-            obstacle["rect"].top = 340  # 上限
+            obstacle["rect"].top = 340  
         if obstacle["rect"].bottom > 595:
-            obstacle["rect"].bottom = 595  # 下限dfghjk
+            obstacle["rect"].bottom = 595  
 
-        # 障害物を描画
+
         pg.draw.rect(screen, (0, 255, 0), obstacle["rect"])
 
-        # 障害物とプレイヤーの衝突判定
         if kk_rct.colliderect(obstacle["rect"]):
             MeHP -= 15
             enemy_obstacles.remove(obstacle)
@@ -348,19 +361,21 @@ def handle_enemy_attack():
     """敵の攻撃を自動制御し、パターンをランダムで選択する"""
     global EnemyAttac, auto_attack, attack_timer, current_attack_pattern
 
-    # 攻撃が20秒で自動終了
-    if auto_attack and (time.time() - attack_timer > 15):
+    # 自動攻撃が開始された場合、攻撃パターンをランダムで選択
+    if auto_attack and (time.time() - attack_timer > 10):  # 攻撃が15秒で自動終了
         print("自動攻撃終了")
         EnemyAttac = False
         auto_attack = False
         current_attack_pattern = None  # 攻撃パターンをリセット
-    elif auto_attack and not EnemyAttac:  # 自動攻撃が設定されている場合のみ開始
+        effect_active = False  # エフェクト停止
+        effect_timer = 0  # エフェクトタイマーをリセット
+        print("次回攻撃準備完了")
+    elif auto_attack and not EnemyAttac: 
+        # 次の攻撃開始
         EnemyAttac = True
-        # ランダムにパターンを選択
-        # current_attack_pattern = random.choice(["pattern1", "pattern2"])
-        # print(f"敵の攻撃パターン: {current_attack_pattern} を開始")
+        current_attack_pattern = random.choice(["pattern1", "pattern2"])  # 新しいパターンをランダムで選択
+        print(f"新しい攻撃パターン: {current_attack_pattern} を開始")
 
-    # 選択された攻撃パターンに応じて攻撃を実行
     if EnemyAttac:
         if current_attack_pattern == "pattern1":
             print("攻撃パターン1: 弾を生成")
@@ -370,8 +385,7 @@ def handle_enemy_attack():
             handle_enemy_obstacles()  # 攻撃パターン2: 障害物を生成
 
 
-# キーイベント処理のデバッグと `enter_menu` の値の監視を強化
-# メインループでエフェクトを描画
+
 def main():
     global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac, debug_EnemyAttac, auto_attack, effect_active
 
