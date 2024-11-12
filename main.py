@@ -18,6 +18,11 @@ en_img = pg.transform.rotozoom(pg.image.load("fig/koukaton.png"), 0, 0.72)
 kk_rct = kk_img.get_rect()  # キャラクターの矩形を取得
 kk_rct.center = int(320 * 0.8), int(590 * 0.8)  # キャラクターの初期位置を設定
 screen = pg.display.set_mode((WIDTH, HEIGHT))  # 指定した寸法で画面を作成
+items=["Potion, 回復","Ether, MP回復","Elixir, 全回復"]
+timing_width = 0
+timing_x = 0
+timing_color = 0
+tmp_tmr = 0
 
 menu_index = 0
 item_index = 0
@@ -49,7 +54,7 @@ def draw_gameover_screen(font):
     pg.display.update()
 
 def draw_attack_bar(font, tmr):
-    global enter_menu, tmp_tmr_F, tmp_tmr
+    global enter_menu, tmp_tmr_F, tmp_tmr, timing_width, timing_x, timing_color
 
     # 攻撃バーの設定
     bar_width = 400
@@ -57,10 +62,18 @@ def draw_attack_bar(font, tmr):
     bar_x = 140
     bar_y = HEIGHT - 150
 
-    # タイミングバーの設定
-    timing_width = 20
-    timing_x = bar_x + (tmr % (bar_width - timing_width))
-    timing_color = (0, 255, 0) if 160 < timing_x < 320 else (255, 0, 0)
+    # タイミングバーの設定：毎回リセット
+    if tmp_tmr_F == False:
+        timing_x = bar_x  # 初期位置を設定
+        timing_width = 20  # 初期のバー幅
+        timing_color = (0, 255, 0)  # 初期色
+        tmp_tmr_F = True
+
+    # タイミングバーの進行
+    if enter_menu == 0:  # 攻撃メニューにいるときのみ進行
+        timing_x += 4  # 進行速度を調整（2は適当な例）
+        if timing_x >= bar_x + bar_width:
+            timing_x = bar_x  # バーの終わりに達したら最初に戻る
 
     # 判定ゾーンの設定（成功範囲）
     judge_zone_start = bar_x + 160
@@ -79,20 +92,37 @@ def draw_attack_bar(font, tmr):
     # プレイヤーの入力待ちと判定処理
     if enter_menu == 0:
         if tmp_tmr_F == False:
-            tmp_tmr = tmr 
+            tmp_tmr = tmr
             tmp_tmr_F = True
-
-        if tmr > (tmp_tmr + 100):
+################################################################################
+        if tmr > (tmp_tmr + 200):
             enter_menu = 9999
             tmp_tmr = 0
             tmp_tmr_F = False
-        elif pg.key.get_pressed()[pg.K_RETURN]:
+        elif pg.key.get_pressed()[pg.K_SPACE]:
             if judge_zone_start <= timing_x <= judge_zone_end:
                 print("成功！攻撃が当たった")
+                reset_attack()
             else:
                 print("失敗！攻撃が外れた")
+                reset_attack()
 
-items=["Potion, 回復","Ether, MP回復","Elixir, 全回復"]
+
+
+                
+def reset_attack():
+    """攻撃をリセットする関数"""
+    global enter_menu, tmp_tmr_F, tmp_tmr, enemy_bullets, enemy_obstacles, timing_width, timing_x, timing_color, tmr
+    enter_menu = 9999
+    tmp_tmr = 0
+    tmp_tmr_F = False
+    enemy_bullets.clear()
+    enemy_obstacles.clear()
+    # timing_width = 0
+    # timing_x = 0
+    # timing_color = 0
+    tmr = 0  # タイマーをリセット
+
 
 def draw_menu(font, event, tmr):
     global EnemyAttac, screen, menu_index, enter_menu, tmp_tmr_F, tmp_tmr
@@ -106,8 +136,8 @@ def draw_menu(font, event, tmr):
                 screen.blit(menu_surface, (160 + i * 160, HEIGHT - 125))
 
         if enter_menu == 0:
-            if enter_menu == 0:
-                draw_attack_bar(font, tmr)
+            print("asdfghjkjfdfgeefwgsdahjgfiuasbdfkjasgfijkagvdfkjasjkfhdioua")
+            draw_attack_bar(font, tmr)
         elif enter_menu == 1:
             pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
             if tmp_tmr_F == False:
@@ -118,6 +148,7 @@ def draw_menu(font, event, tmr):
                 tmp_tmr = 0
                 tmp_tmr_F = False
         elif enter_menu == 2:
+            print("saughdfiahfuiosaghi")
             #pg.draw.rect(screen, (255, 255, 0), (128, 328, 424, 280), 0)
             #if tmp_tmr_F == False:
                 #tmp_tmr = tmr 
@@ -297,11 +328,13 @@ def main():
                     EnemyAttac = not EnemyAttac
                     if debug_EnemyAttac:
                         EnemyAttac = False
+                    reset_attack()  # 攻撃開始時にリセット
                 if event.key == pg.K_LSHIFT:
                     # `debug_EnemyAttac` トグルするが、`EnemyAttac` が有効なら無効化
                     debug_EnemyAttac = not debug_EnemyAttac
                     if EnemyAttac:
                         EnemyAttac = False
+                    reset_attack()  # デバッグ攻撃開始時にリセット
                 if not EnemyAttac and not debug_EnemyAttac:
                     # メニュー操作の処理
                     if event.key == pg.K_RIGHT:
@@ -310,6 +343,9 @@ def main():
                         menu_index = (menu_index - 1) % 3
                     elif event.key == pg.K_RETURN:
                         enter_menu = menu_index
+                        if enter_menu == 0:  # 攻撃メニューに入るときにリセット
+                            #reset_attack()
+                            pass
 
         screen.fill(BLACK)
         draw_status(font)
@@ -326,7 +362,6 @@ def main():
             handle_enemy_obstacles()
 
         if GameOver:
-            #print("Game Over")
             draw_gameover_screen(font)
             time.sleep(5)
             return
