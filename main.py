@@ -32,6 +32,8 @@ tmp_tmr_F = 0
 enemy_bullets = [] # 攻撃弾の設定
 enemy_obstacles = [] # 新しい攻撃の障害物
 draw_message_No = 0
+effect_timer = 0  
+effect_duration = 30
 
 # グローバル宣言(フラグ)
 EnemyAttac = False
@@ -42,12 +44,29 @@ DebugMode = False
 auto_attack = False  # 自動攻撃のフラグ
 attack_timer = time.time()  # 攻撃タイマー
 current_attack_pattern = None
+effect_active = False
 
 # 色の定義
 WHITE = (255, 255, 255)  # 白
 BLACK = (0, 0, 0)        # 黒
 GRAY = (200, 200, 200)   # グレー
 RED = (255, 0, 0)        #赤
+
+# エフェクトの表示処理
+def draw_enemy_effect():
+    global effect_active, effect_timer
+    if effect_active:
+        # エフェクト（例えば、赤い光）を敵キャラの上に表示
+        effect_rect = pg.Rect(WIDTH / 2 - 50, 80 + 5 * math.sin(tmr * 0.05), 100, 100)
+        pg.draw.circle(screen, (255, 0, 0), effect_rect.center, 50)  # 赤い円を描画
+        pg.draw.circle(screen, (255, 255, 0), effect_rect.center, 30)  # 黄色い円で重ねて描画
+
+        # エフェクトの持続時間が過ぎたらエフェクトを終了
+        if effect_timer > effect_duration:
+            effect_active = False
+            effect_timer = 0  # タイマーリセット
+        else:
+            effect_timer += 1  # タイマーを進める
 
 def draw_gameover_screen(font):
     """ゲームオーバー画面を描画する"""
@@ -110,8 +129,10 @@ def draw_attack_bar(font, tmr):
 
 
                 
+            effect_timer += 1  # タイマーを進める
+
 def reset_attack():
-    global enter_menu, tmp_tmr_F, tmp_tmr, timing_x, timing_color, auto_attack, attack_timer, EnemyAttac, current_attack_pattern
+    global enter_menu, tmp_tmr_F, tmp_tmr, timing_x, timing_color, auto_attack, attack_timer, EnemyAttac, current_attack_pattern, effect_active, effect_timer
     enter_menu = 9999  # メニューのリセット
     tmp_tmr = 0  # タイマーリセット
     tmp_tmr_F = False  # タイミングフラグリセット
@@ -122,6 +143,10 @@ def reset_attack():
     current_attack_pattern = random.choice(["pattern1", "pattern2"])  # ランダムな攻撃パターンの選択
     print(f"敵の攻撃パターン: {current_attack_pattern} を開始")
     EnemyAttac = True  # 敵の攻撃を開始
+
+    # エフェクト開始
+    effect_active = True
+    effect_timer = 0  # エフェクトタイマーをリセット
 
 
 
@@ -346,43 +371,40 @@ def handle_enemy_attack():
 
 
 # キーイベント処理のデバッグと `enter_menu` の値の監視を強化
+# メインループでエフェクトを描画
 def main():
-    global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac, debug_EnemyAttac, auto_attack
+    global MeLevel, MeHP, EnemyHP, GameOver, kk_rct, screen, menu_index, enter_menu, tmr, EnemyAttac, debug_EnemyAttac, auto_attack, effect_active
 
     pg.display.set_caption("逃げろ！こうかとん")
     font = pg.font.Font(None, int(60 * 0.5))
     clock = pg.time.Clock()
 
     while True:
-        # print(f"enter_menu: {enter_menu}, menu_index: {menu_index}")  # 現在の状態を常に出力して追跡
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_RSHIFT:
-                    EnemyAttac = not EnemyAttac
-                    if debug_EnemyAttac:
-                        EnemyAttac = False
-                    reset_attack()
-                if event.key == pg.K_LSHIFT:
-                    debug_EnemyAttac = not debug_EnemyAttac
-                    if EnemyAttac:
-                        EnemyAttac = False
-                    reset_attack()
+                # if event.key == pg.K_RSHIFT:
+                #     EnemyAttac = not EnemyAttac
+                #     if debug_EnemyAttac:
+                #         EnemyAttac = False
+                #     reset_attack()
+                # if event.key == pg.K_LSHIFT:
+                #     debug_EnemyAttac = not debug_EnemyAttac
+                #     if EnemyAttac:
+                #         EnemyAttac = False
+                #     reset_attack()
                 if not EnemyAttac and not debug_EnemyAttac:
                     if event.key == pg.K_RIGHT:
                         menu_index = (menu_index + 1) % 3
                     elif event.key == pg.K_LEFT:
                         menu_index = (menu_index - 1) % 3
                     elif event.key == pg.K_RETURN:
-                        # `K_RETURN` キーが押された時の処理
                         print(f"K_RETURN が押されました。menu_index: {menu_index}")
                         enter_menu = menu_index
                         if enter_menu == 0:
                             pass
-                            #reset_attack()  # 攻撃メニューが選ばれたときのみリセットを呼び出す
                     elif event.key == pg.K_SPACE and enter_menu == 0:
-                        # スペースキーが押されるとタイミング判定を実行
                         if timing_x >= 160 and timing_x <= 320:
                             print("成功！攻撃が当たった")
                             reset_attack()
@@ -397,12 +419,10 @@ def main():
         draw_enemy()
         draw_message(font)
 
-        # if EnemyAttac:
-        #     handle_enemy_bullets()
-        # elif debug_EnemyAttac:
-        #     handle_enemy_obstacles()
+        # エフェクトを描画
+        draw_enemy_effect()
 
-        handle_enemy_attack()  # 敵の攻撃の自動終了をチェック
+        handle_enemy_attack()
 
         if GameOver:
             draw_gameover_screen(font)
@@ -412,6 +432,7 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(60)
+
 
 
 
