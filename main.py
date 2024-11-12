@@ -5,7 +5,6 @@ import math
 import random
 import time
 
-# 実行ファイルのディレクトリに移動
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # グローバル変数を宣言(ステータス)
@@ -41,13 +40,13 @@ debug_EnemyAttac = False
 GameOver = False
 tmp_tmr_F = False
 DebugMode = False
-auto_attack = False  # 自動攻撃のフラグ
-attack_timer = time.time()  # 攻撃タイマー
+auto_attack = False  
+attack_timer = time.time()  
 current_attack_pattern = None
 effect_active = False
 tmp = False
 
-# 色の定義
+
 WHITE = (255, 255, 255)  # 白
 BLACK = (0, 0, 0)        # 黒
 GRAY = (200, 200, 200)   # グレー
