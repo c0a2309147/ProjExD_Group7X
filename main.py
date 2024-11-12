@@ -349,7 +349,7 @@ def handle_enemy_attack():
     global EnemyAttac, auto_attack, attack_timer, current_attack_pattern
 
     # 攻撃が20秒で自動終了
-    if auto_attack and (time.time() - attack_timer > 5):
+    if auto_attack and (time.time() - attack_timer > 15):
         print("自動攻撃終了")
         EnemyAttac = False
         auto_attack = False
