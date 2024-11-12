@@ -58,7 +58,7 @@ def draw_enemy_effect():
     global effect_active, effect_timer, tmp
     if effect_active:
 
-        font = pg.font.SysFont("Arial", 48)
+        font = pg.font.SysFont("Arial", 80)
         miss_text = font.render("Miss", True, (255, 0, 255))  
         screen.blit(miss_text, (WIDTH / 2 - miss_text.get_width()  / 2, HEIGHT / 2 - 300)) 
 
