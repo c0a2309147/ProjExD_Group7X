@@ -123,10 +123,39 @@ def reset_attack():
     timing_x = 0  # タイミングバー位置のリセット
     timing_color = (0, 255, 0)  # 色リセット
     auto_attack = True  # 自動攻撃のフラグを立てる
-    attack_timer = time.time()  # 攻撃タイマーを開始
+    # attack_timer = time.time()  # 攻撃タイマーを開始
     current_attack_pattern = random.choice(["pattern1", "pattern2"])  # 攻撃パターンをランダム選択
     print(f"敵の攻撃パターン: {current_attack_pattern} を開始")
     EnemyAttac = True  # 敵の攻撃を開始
+
+def handle_enemy_bullets():
+    global MeHP, GameOver
+    #if tmr % 20 == 0:
+    if EnemyAttac and tmr % 5 == 0:
+        x = random.randint(60, 560)
+        y = 80
+        speed = random.randint(2, 6)
+        enemy_bullets.append({"rect": pg.Rect(x, y, 10, 10), "speed": speed})
+    
+
+    for bullet in enemy_bullets[:]:
+        bullet["rect"].y += bullet["speed"]
+        if bullet["rect"].top > HEIGHT:
+            enemy_bullets.remove(bullet)
+            continue
+
+        pg.draw.rect(screen, (255, 0, 0), bullet["rect"])
+
+        if kk_rct.colliderect(bullet["rect"]):
+            MeHP -= 10
+            enemy_bullets.remove(bullet)
+            if MeHP <= 0:
+                GameOver = True
+                
+
+
+    if not EnemyAttac:
+        enemy_bullets.clear()
 
 
 
@@ -144,7 +173,6 @@ def draw_menu(font, event, tmr):
                 screen.blit(menu_surface, (160 + i * 160, HEIGHT - 125))
 
         if enter_menu == 0:
-            # print("testetetstetstetstetsgetst")
             draw_attack_bar(font, tmr)
         elif enter_menu == 1:
             print("aaaaaa")
@@ -317,7 +345,7 @@ def handle_enemy_attack():
     if EnemyAttac:
         if current_attack_pattern == "pattern1":
             print("攻撃パターン1: 弾を生成")
-            handle_enemy_obstacles()  # 攻撃パターン1: 弾を生成
+            handle_enemy_bullets()  # 攻撃パターン1: 弾を生成
         elif current_attack_pattern == "pattern2":
             print("攻撃パターン2: 障害物を生成")
             handle_enemy_obstacles()  # 攻撃パターン2: 障害物を生成
