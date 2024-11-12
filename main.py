@@ -65,41 +65,41 @@ def draw_attack_bar(font, tmr):
     bar_x = 140
     bar_y = HEIGHT - 150
 
-    # タイミングバーの設定
-    if not tmp_tmr_F:
+    # タイミングバーの初期化
+    if enter_menu == 0 and not tmp_tmr_F:
         timing_x = bar_x
         timing_width = 20
         timing_color = (0, 255, 0)
-        tmp_tmr_F = True
+        tmp_tmr_F = True  # 初期化フラグを立てる
 
     # タイミングバーの進行
     if enter_menu == 0:
-        timing_x += 4
+        timing_x += 4  # タイミングバーの移動速度
         if timing_x >= bar_x + bar_width:
-            timing_x = bar_x
+            timing_x = bar_x  # タイミングバーを最初に戻す
 
     # 判定ゾーンの設定
     judge_zone_start = bar_x + 160
     judge_zone_end = bar_x + 320
     judge_zone_color = (255, 255, 0)
 
-    # バー全体の枠
-    pg.draw.rect(screen, WHITE, (bar_x, bar_y, bar_width, bar_height), 2)
+    # 攻撃バー枠
+    pg.draw.rect(screen, WHITE, (bar_x, bar_y +30, bar_width, bar_height), 2)
 
-    # 判定ゾーンを描画
-    pg.draw.rect(screen, judge_zone_color, (judge_zone_start, bar_y, judge_zone_end - judge_zone_start, bar_height))
+    # 判定ゾーンの描画
+    pg.draw.rect(screen, judge_zone_color, (judge_zone_start, bar_y+30, judge_zone_end - judge_zone_start, bar_height))
 
-    # タイミングバーを描画
-    pg.draw.rect(screen, timing_color, (timing_x, bar_y, timing_width, bar_height))
+    # タイミングバーの描画
+    pg.draw.rect(screen, timing_color, (timing_x, bar_y+30, timing_width, bar_height))
 
-    if enter_menu == 0 and not tmp_tmr_F:
+    # タイマーをリセット
+    if enter_menu == 0 and tmp_tmr_F:
         tmp_tmr = tmr
         tmp_tmr_F = True
 
-    if tmr > (tmp_tmr + 200):
-        enter_menu = 9999
-        tmp_tmr = 0
-        tmp_tmr_F = False
+    # 判定処理
+    if tmr > (tmp_tmr + 200):  # 攻撃バーが終了するまでの時間
+        reset_attack()  # リセット関数を呼び出して初期化
     elif pg.key.get_pressed()[pg.K_SPACE]:
         if judge_zone_start <= timing_x <= judge_zone_end:
             print("成功！攻撃が当たった")
@@ -109,24 +109,21 @@ def draw_attack_bar(font, tmr):
             reset_attack()
 
 
-
-
-
                 
 def reset_attack():
-    global enter_menu, tmp_tmr_F, tmp_tmr, enemy_bullets, enemy_obstacles, timing_width, timing_x, timing_color, tmr, auto_attack, attack_timer, EnemyAttac, current_attack_pattern
-    enter_menu = 9999
-    tmp_tmr = 0
-    tmp_tmr_F = False
-    enemy_bullets.clear()
-    enemy_obstacles.clear()
+    global enter_menu, tmp_tmr_F, tmp_tmr, timing_x, timing_color, auto_attack, attack_timer, EnemyAttac, current_attack_pattern
+    enter_menu = 9999  # メニューのリセット
+    tmp_tmr = 0  # タイマーリセット
+    tmp_tmr_F = False  # タイミングフラグリセット
     timing_x = 0  # タイミングバー位置のリセット
     timing_color = (0, 255, 0)  # 色リセット
     auto_attack = True  # 自動攻撃のフラグを立てる
-    # attack_timer = time.time()  # 攻撃タイマーを開始
-    current_attack_pattern = random.choice(["pattern1", "pattern2"])  # 攻撃パターンをランダム選択
+    attack_timer = time.time()  # 攻撃タイマーのリセット
+    current_attack_pattern = random.choice(["pattern1", "pattern2"])  # ランダムな攻撃パターンの選択
     print(f"敵の攻撃パターン: {current_attack_pattern} を開始")
     EnemyAttac = True  # 敵の攻撃を開始
+
+
 
 def handle_enemy_bullets():
     global MeHP, GameOver
@@ -156,9 +153,6 @@ def handle_enemy_bullets():
 
     if not EnemyAttac:
         enemy_bullets.clear()
-
-
-
 
 
 def draw_menu(font, event, tmr):
@@ -330,7 +324,7 @@ def handle_enemy_attack():
     global EnemyAttac, auto_attack, attack_timer, current_attack_pattern
 
     # 攻撃が20秒で自動終了
-    if auto_attack and (time.time() - attack_timer > 20):
+    if auto_attack and (time.time() - attack_timer > 5):
         print("自動攻撃終了")
         EnemyAttac = False
         auto_attack = False
